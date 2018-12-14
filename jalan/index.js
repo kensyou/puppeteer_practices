@@ -25,6 +25,7 @@ const Readable = require("stream").Readable;
     skip(1),
     concatMap(async l => {
       const url = l[0];
+      const serial = l[1];
       console.log("Checking:", url);
       await page.goto(url, {
         waitUntil: "networkidle2"
@@ -45,23 +46,107 @@ const Readable = require("stream").Readable;
         hotel.parking = getInnerHtmlSafe(
           "div.shisetsu-accesspartking_body_wrap > table tr:nth-child(3) td:nth-child(3)"
         );
+        hotel.rmWestern = getInnerHtmlSafe(
+          "div.shisetsu-roomsetsubi_body_wrap > table > tbody > tr:nth-child(1) > td > div > table > tbody > tr:nth-child(2) > td:nth-child(1)"
+        );
+        hotel.rmJapanese = getInnerHtmlSafe(
+          "div.shisetsu-roomsetsubi_body_wrap > table > tbody > tr:nth-child(1) > td > div > table > tbody > tr:nth-child(2) > td:nth-child(2)"
+        );
+        hotel.rmWestJapanese = getInnerHtmlSafe(
+          "div.shisetsu-roomsetsubi_body_wrap > table > tbody > tr:nth-child(1) > td > div > table > tbody > tr:nth-child(2) > td:nth-child(3)"
+        );
+        hotel.rmOther = getInnerHtmlSafe(
+          "div.shisetsu-roomsetsubi_body_wrap > table > tbody > tr:nth-child(1) > td > div > table > tbody > tr:nth-child(2) > td:nth-child(4)"
+        );
+        hotel.rmTotal = getInnerHtmlSafe(
+          "div.shisetsu-roomsetsubi_body_wrap > table > tbody > tr:nth-child(1) > td > div > table > tbody > tr:nth-child(2) > td:nth-child(5)"
+        );
+        const optional = getInnerHtmlSafe(
+          "div.shisetsu-roomsetsubi_body_wrap > table > tbody > tr:nth-child(3) > td > div > table > tbody > tr:nth-child(1) > td:nth-child(1)"
+        );
+        if (optional === "シングル") {
+          hotel.rmSingle = getInnerHtmlSafe(
+            "div.shisetsu-roomsetsubi_body_wrap > table > tbody > tr:nth-child(3) > td > div > table > tbody > tr:nth-child(2) > td:nth-child(1)"
+          );
+          hotel.rmDouble = getInnerHtmlSafe(
+            "div.shisetsu-roomsetsubi_body_wrap > table > tbody > tr:nth-child(3) > td > div > table > tbody > tr:nth-child(2) > td:nth-child(2)"
+          );
+          hotel.rmTwin = getInnerHtmlSafe(
+            "div.shisetsu-roomsetsubi_body_wrap > table > tbody > tr:nth-child(3) > td > div > table > tbody > tr:nth-child(2) > td:nth-child(3)"
+          );
+          hotel.rmSuite = getInnerHtmlSafe(
+            "div.shisetsu-roomsetsubi_body_wrap > table > tbody > tr:nth-child(3) > td > div > table > tbody > tr:nth-child(2) > td:nth-child(4)"
+          );
+
+          hotel.rmSingleArea = getInnerHtmlSafe(
+            "div.shisetsu-roomsetsubi_body_wrap > table > tbody > tr:nth-child(3) > td > div > table > tbody > tr:nth-child(3) > td:nth-child(1)"
+          );
+          hotel.rmDoubleArea = getInnerHtmlSafe(
+            "div.shisetsu-roomsetsubi_body_wrap > table > tbody > tr:nth-child(3) > td > div > table > tbody > tr:nth-child(3) > td:nth-child(2)"
+          );
+          hotel.rmTwinArea = getInnerHtmlSafe(
+            "div.shisetsu-roomsetsubi_body_wrap > table > tbody > tr:nth-child(3) > td > div > table > tbody > tr:nth-child(3) > td:nth-child(3)"
+          );
+          hotel.rmSuiteArea = getInnerHtmlSafe(
+            "div.shisetsu-roomsetsubi_body_wrap > table > tbody > tr:nth-child(3) > td > div > table > tbody > tr:nth-child(3) > td:nth-child(4)"
+          );
+        }
         return hotel;
       });
       if (hotel.name) {
-        hotels.push({
+        const st = text =>
+          text && text.trim
+            ? text
+                .trim()
+                .replace("m<sup>2</sup>", "")
+                .replace("室", "")
+            : "";
+        const h = {
+          serial: serial,
+          url: url,
           name: hotel.name,
           address: helper.trimAddress(hotel.address),
           access: helper.trimAccess(hotel.access),
-          parking: helper.trimParking(hotel.parking)
-        });
+          parking: helper.trimParking(hotel.parking),
+          rmWestern: st(hotel.rmWestern),
+          rmJapanese: st(hotel.rmJapanese),
+          rmWestJapanese: st(hotel.rmWestJapanese),
+          rmOther: st(hotel.rmOther),
+          rmTotal: st(hotel.rmTotal),
+          rmSingle: st(hotel.rmSingle),
+          rmDouble: st(hotel.rmDouble),
+          rmTwin: st(hotel.rmTwin),
+          rmSuite: st(hotel.rmSuite),
+          rmSingleArea: st(hotel.rmSingleArea),
+          rmDoubleArea: st(hotel.rmDoubleArea),
+          rmTwinArea: st(hotel.rmTwinArea),
+          rmSuiteArea: st(hotel.rmSuiteArea)
+        };
+        console.log(h);
+        hotels.push(h);
       }
     }),
     finalize(async () => {
       const columns = {
+        serial: "#",
+        url: "URL",
         name: "ホテル",
         address: "住所",
         access: "アクセス",
-        parking: "駐車場"
+        parking: "駐車場",
+        rmWestern: "洋室",
+        rmJapanese: "和室",
+        rmWestJapanese: "和洋室",
+        rmOther: "その他",
+        rmTotal: "総部屋数",
+        rmSingle: "シングル",
+        rmSingleArea: "シングル(sqm)",
+        rmDouble: "ダブル",
+        rmDoubleArea: "ダブル(sqm)",
+        rmTwin: "ツイン",
+        rmTwinArea: "ツイン(sqm)",
+        rmSuite: "スイート",
+        rmSuiteArea: "スイート(sqm)"
       };
       stringify(
         hotels,
@@ -70,7 +155,7 @@ const Readable = require("stream").Readable;
           const s = new Readable();
           s._read = () => {};
           const dest = fs.createWriteStream("output.csv");
-          s.push(iconv.encode(output, 'Shift_JIS'));
+          s.push(output); // Use left if utf8 is not desired. s.push(iconv.encode(output, "Shift_JIS")); 
           s.push(null);
           s.pipe(dest);
         }
