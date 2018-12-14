@@ -1,2 +1,2 @@
-# puppeteer_practices
-My practices of puppetter
+# Readme
+Just some practices for web scraping using puppeteer.

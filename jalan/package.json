@@ -1,0 +1,21 @@
+{
+  "name": "jalan",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "dependencies": {
+    "csv": "^5.0.0",
+    "iconv-lite": "^0.4.24",
+    "puppeteer": "^1.11.0",
+    "ramda": "^0.26.1",
+    "rxjs": "^6.3.3",
+    "rxjs-stream": "^3.0.1"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}
