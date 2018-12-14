@@ -6,6 +6,7 @@
   "dependencies": {
     "csv": "^5.0.0",
     "iconv-lite": "^0.4.24",
+    "mocha": "^5.2.0",
     "puppeteer": "^1.11.0",
     "ramda": "^0.26.1",
     "rxjs": "^6.3.3",
